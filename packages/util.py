@@ -96,7 +96,7 @@ def call_bland(search_uuid, call_uuid, pharm_phone, prescription):
         "type": prescription["type"]
     }
     
-    # Convert parameters to URL query string
+    # Convert parameters to URL query string 
     query_string = "&amp;".join([f"{key}={value}" for key, value in parameters.items()])
 
     # TwiML
