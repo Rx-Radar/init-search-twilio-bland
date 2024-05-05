@@ -11,7 +11,6 @@ auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
 client = Client(account_sid, auth_token)
 
 
-
 # send sms message
 def send_sms(twilio_client, phone_number, msg):
   TWILIO_PHONE_NUMBER = "+18337034125"
@@ -37,7 +36,7 @@ def notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid):
 def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
     try: 
         # Get the 'troy_pharmacies' collection
-        pharmacies = db.collection('test_pharmacies').stream() # TODO change to troy pharmacies
+        pharmacies = db.collection('albany_pharmacies').stream() # TODO change to troy pharmacies
         number_calls_made = 0
         # call each pharmacy
         for pharmacy in pharmacies:
