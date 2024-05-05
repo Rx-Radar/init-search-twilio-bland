@@ -1,5 +1,5 @@
 from firebase_admin import auth
-from pharmacy_map import EXT_CVS
+from packages import pharmacy_map as PM
 from twilio.rest import Client
 from flask import jsonify
 import time
@@ -102,7 +102,7 @@ def call_bland(search_uuid, call_uuid, pharm_phone, prescription):
     # TwiML
     twiml = f"""
     <Response>
-        <Play digits="{EXT_CVS}"></Play>
+        <Play digits="{PM.EXT_CVS}"></Play>
         <Redirect>https://us-central1-rxradar.cloudfunctions.net/test-callback?{query_string}</Redirect>
     </Response>
     """
