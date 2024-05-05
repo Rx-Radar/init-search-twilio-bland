@@ -37,7 +37,7 @@ def notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid):
 def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
     try: 
         # Get the 'troy_pharmacies' collection
-        pharmacies = db.collection('pharmacies').stream() # TODO change to troy pharmacies
+        pharmacies = db.collection('test_pharmacies').stream() # TODO change to troy pharmacies
 
         # call each pharmacy
         for pharmacy in pharmacies:
