@@ -103,7 +103,7 @@ def call_bland(search_uuid, call_uuid, pharm_phone, prescription):
     twiml = f"""
     <Response>
         <Play digits="{PM.EXT_TEST}"></Play>
-        <Redirect>https://us-central1-rxradar.cloudfunctions.net/test-callback?{query_string}</Redirect>
+        <Redirect>https://us-central1-rxradar.cloudfunctions.net/transfer-twilio-bland?{query_string}</Redirect>
     </Response>
     """
 

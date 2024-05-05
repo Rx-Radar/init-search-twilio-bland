@@ -28,10 +28,10 @@ NUMBER_OF_CALLS = 1 # global var for number of pharmacies we will call
     "user_location": "Troy, NY",
     "prescription": {
         "name": "Focalin",
-        "dosage": "10mg",
+        "dosage": "10",
         "brand_or_generic": "Generic",
-        "quantity": "30 tablets",
-        "type": "Extended Release"
+        "quantity": "30",
+        "type": "Extended%20Release"
     }
 }
 """
