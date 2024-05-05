@@ -41,6 +41,7 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
         number_calls_made = 0
         # call each pharmacy
         for pharmacy in pharmacies:
+            number_calls_made += 1
             try: 
                 # Access document data
                 pharm_data = pharmacy.to_dict()
