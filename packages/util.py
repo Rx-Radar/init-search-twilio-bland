@@ -4,7 +4,7 @@ from twilio.rest import Client
 from flask import jsonify
 import time
 import uuid
-import requests
+from urllib.parse import quote
 
 account_sid = 'AC3d433258fe9b280b01ba83afe272f438'
 auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
@@ -90,7 +90,8 @@ def call_bland(search_uuid, call_uuid, pharm_phone, pharm_name, prescription):
         }
         
         # Convert parameters to URL query string 
-        query_string = "&amp;".join([f"{key}={value}" for key, value in parameters.items()])
+        query_string = "&amp;".join([f"{key}={quote(value)}" for key, value in parameters.items()])
+
 
         # TwiML
         twiml = f"""
