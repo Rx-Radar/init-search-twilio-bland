@@ -38,10 +38,9 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
     try: 
         # Get the 'troy_pharmacies' collection
         pharmacies = db.collection('test_pharmacies').stream() # TODO change to troy pharmacies
-
+        number_calls_made = 0
         # call each pharmacy
         for pharmacy in pharmacies:
-
             try: 
                 # Access document data
                 pharm_data = pharmacy.to_dict()
@@ -55,79 +54,72 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
                 success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
                 if not success:
                     return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
-            
                 # initialize bland call
-                success, out, exc = call_bland(search_request_uuid, call_uuid, pharm_phone, prescription)
+                success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
                 if not success:
-                    try: 
-                        # decrement num_calls parameter in search_request (so request is not waiting for more calls than will come through)
-                        cur_num_calls = db.collection("search_requests").document(search_request_uuid).get().to_dict().get("num_calls")
-                        search_request_update = {"num_calls": cur_num_calls - 1}
-                        db.collection('search_requests').document(search_request_uuid).update(search_request_update)
-
-                        # text user that all calls were failed to be placed with bland
-                        if (cur_num_calls - 1) == 0:
-                            notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid)
-                            
-                    except Exception as e:
-                        return False, None, jsonify({"error": "Bland called failed Failed decrementing num_calls in search request", "exception": str(e)})
-                    
                     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
                     print(f'{call_uuid} log: Bland call failed')
-                
             except Exception as e:
                 return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
     
+        if number_calls_made == 0:
+            notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid)
+        else:
+            db.collection('search_requests').document(search_request_uuid).update({"unfinished_calls" : number_calls_made})
+
+                    
     except Exception as e: 
         return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacies from db", "exception": str(e)})
 
     # successs case
     return True, jsonify({"message": "pharmacy calls placed"}), None
 
-# places a call to a pharmacy using bland
-def call_bland(search_uuid, call_uuid, pharm_phone, prescription):
-    parameters = {
-        "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
-        "request_uuid": search_uuid,
-        "name": prescription["name"],
-        "dosage": prescription["dosage"],
-        "brand": prescription["brand_or_generic"],
-        "quantity": prescription["quantity"],
-        "type": prescription["type"]
-    }
-    
-    # Convert parameters to URL query string 
-    query_string = "&amp;".join([f"{key}={value}" for key, value in parameters.items()])
+# places a call to pharmacy using twilio to dial, then redirects using redirect url.
+def call_bland(search_uuid, call_uuid, pharm_phone, pharm_name, prescription):
+    #pass in pharm name as we will use this for extensions later
+    try:
+        parameters = {
+            "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
+            "request_uuid": search_uuid,
+            "name": prescription["name"],
+            "dosage": prescription["dosage"],
+            "brand": prescription["brand_or_generic"],
+            "quantity": prescription["quantity"],
+            "type": prescription["type"]
+        }
+        
+        # Convert parameters to URL query string 
+        query_string = "&amp;".join([f"{key}={value}" for key, value in parameters.items()])
 
-    # TwiML
-    twiml = f"""
-    <Response>
-        <Play digits="{PM.EXT_TEST}"></Play>
-        <Redirect>https://us-central1-rxradar.cloudfunctions.net/transfer-twilio-bland?{query_string}</Redirect>
-    </Response>
-    """
+        # TwiML
+        twiml = f"""
+        <Response>
+            <Play digits="{PM.EXT_TEST}"></Play>
+            <Redirect>https://us-central1-rxradar.cloudfunctions.net/transfer-twilio-bland?{query_string}</Redirect>
+        </Response>
+        """
 
-    """
-    Note: in cloud function, extract url params like:
-        name = request.args.get('name')
-        dosage = request.args.get('dosage')
-        brand = request.args.get('brand')
-        quantity = request.args.get('quantity')
-        medication_type = request.args.get('type')
-    """
+        """
+        Note: in cloud function, extract url params like:
+            name = request.args.get('name')
+            dosage = request.args.get('dosage')
+            brand = request.args.get('brand')
+            quantity = request.args.get('quantity')
+            medication_type = request.args.get('type')
+        """
 
-    response = client.calls.create(
-        twiml=twiml,  # TwiML content as URL data
-        to=pharm_phone,
-        from_='+18337034125'
-    )
-    
-    # call plased succesfully
-    return True, jsonify({'message': 'call placed'}), None
+        client.calls.create(
+            twiml=twiml,  # TwiML content as URL data
+            to=pharm_phone,
+            from_='+18337034125'
+        )
+        # call plased succesfully
+        return True
+    except Exception:
+        return  False
 
 # adds call to db
 def db_add_call(db, search_request_uuid, pharm_uuid):
-    print('even in this db_add_call')
     try:
         call_uuid = str(uuid.uuid4())
         # Current epoch time
@@ -151,7 +143,7 @@ def db_add_call(db, search_request_uuid, pharm_uuid):
         return False, None, str(e)
 
 # creates a new search request
-def db_add_search(req_obj, verfication_token, db, num_calls):
+def db_add_search(req_obj, verfication_token, db):
     try:
         # Generate a unique ID for the document
         unique_id = str(uuid.uuid4())
@@ -181,9 +173,10 @@ def db_add_search(req_obj, verfication_token, db, num_calls):
                 "quantity": med_quantity,
                 "type": med_type
             },
+            "notified_user": False,
+            "calls_remaining": 0,
+            "calls" : [],
             "epoch_initiated": epoch_initiated,
-            "calls": [],
-            "num_calls": num_calls
         }
 
         # Add the data to a new document in the 'medications' collection

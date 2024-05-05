@@ -17,10 +17,6 @@ ACCOUNT_SID = 'AC3d433258fe9b280b01ba83afe272f438'
 AUTH_TOKEN = '2cc106ae7b360c99a7be11cc4ea77c07'
 twilio_client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-
-# USED FOR TESTING PURPOSES 
-NUMBER_OF_CALLS = 1 # global var for number of pharmacies we will call 
-
 """
 {
     "user_session_token": "12345abcde",
@@ -74,7 +70,7 @@ def main(request):
     #     return jsonify({'error': 'Unauthorized'}), 401, headers
 
     # Push new search to db
-    res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db, NUMBER_OF_CALLS)
+    res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
     if not res:
         return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
     
