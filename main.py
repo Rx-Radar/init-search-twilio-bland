@@ -64,6 +64,8 @@ def main(request):
     if not success:
         return out, code, headers
 
+
+    verification_token = "test"
     # # Verify the user session token
     # user_session_token = request_data["user_session_token"]
     # verification_token = util.verify_user_token(token=user_session_token)
