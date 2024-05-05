@@ -23,16 +23,16 @@ NUMBER_OF_CALLS = 1 # global var for number of pharmacies we will call
 
 """
 {
-  "user_session_token": "12345abcde",
-  "phone_number": "123-456-7890",
-  "user_location": "123 Main St, Anytown, USA",
-  "medication": {
-    "name": "focalin",
-    "dosage": "10mg",
-    "brand_or_generic": "Generic",
-    "quantity": "30 tablets",
-    "type": "Tablet"
-  }
+    "user_session_token": "12345abcde",
+    "phone_number": "+12032248444",
+    "user_location": "Troy, NY",
+    "prescription": {
+        "name": "Focalin",
+        "dosage": "10mg",
+        "brand_or_generic": "Generic",
+        "quantity": "30 tablets",
+        "type": "Extended Release"
+    }
 }
 """
 @functions_framework.http
@@ -64,12 +64,12 @@ def main(request):
     if not success:
         return out, code, headers
 
-    # Verify the user session token
-    user_session_token = request_data["user_session_token"]
-    verification_token = util.verify_user_token(token=user_session_token)
-    if not verification_token:
-        # If the user session token is incorrect, return a 401 Unauthorized response
-        return jsonify({'error': 'Unauthorized'}), 401, headers
+    # # Verify the user session token
+    # user_session_token = request_data["user_session_token"]
+    # verification_token = util.verify_user_token(token=user_session_token)
+    # if not verification_token:
+    #     # If the user session token is incorrect, return a 401 Unauthorized response
+    #     return jsonify({'error': 'Unauthorized'}), 401, headers
 
     # Push new search to db
     res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db, NUMBER_OF_CALLS)
