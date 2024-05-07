@@ -50,7 +50,7 @@ def main(request):
     # # Set CORS headers for the main request
     headers = {"Access-Control-Allow-Origin": "*"} # change from "*" to "https://rx-radar.com" for production
 
-    # begin the actual medication_request
+    # Begin the actual medication_request
         
     # Get the JSON data from the request
     request_data = request.get_json(silent=True)
