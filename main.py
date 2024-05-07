@@ -73,16 +73,18 @@ def main(request):
     if not user_can_search: 
         return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
 
-    # Push new search to db
-    res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
-    if not res:
-        return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
+    # # Push new search to db
+    # res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
+    # if not res:
+    #     return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
     
-    # calls pharmacies
-    prescription = request_data["prescription"]
-    success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription)
-    if not success:
-        return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500, headers
+    # # calls pharmacies
+    # prescription = request_data["prescription"]
+    # success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription)
+    # if not success:
+    #     return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500, headers
+
+    search_request_uuid = 'ssss'
     
     # update user doc with search information
     util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
