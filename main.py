@@ -66,6 +66,12 @@ def main(request):
     if not verification_token:
         # If the user session token is incorrect, return a 401 Unauthorized response
         return jsonify({'error': 'Unauthorized'}), 401, headers
+    
+    # checks that the user is valid to place calls
+    phone_number = request_data["phone_number"]
+    user_can_search = util.can_user_search(db, phone_number)
+    if not user_can_search: 
+        return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
 
     # Push new search to db
     res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
@@ -77,6 +83,9 @@ def main(request):
     success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription)
     if not success:
         return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500, headers
+    
+    # update user doc with search information
+    util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
 
     # return success message
     return jsonify({'message': 'Request is valid'}), 200, headers

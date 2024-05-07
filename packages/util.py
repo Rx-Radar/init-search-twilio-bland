@@ -1,4 +1,4 @@
-from firebase_admin import auth
+from firebase_admin import auth, firestore
 from packages import pharmacy_map as PM
 from twilio.rest import Client
 from flask import jsonify
@@ -9,6 +9,52 @@ from urllib.parse import quote
 account_sid = 'AC3d433258fe9b280b01ba83afe272f438'
 auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
 client = Client(account_sid, auth_token)
+
+# records the search in the user document
+def update_user_with_search(db, phone_number, search_request_uuid):
+    try: 
+        query_ref = db.collection('users').where('phone', '==', phone_number)
+
+        updated_search_data = {
+            "last_search_timestamp": time.time(),
+            "search_requests": firestore.ArrayUnion([search_request_uuid]),
+            "phone": phone_number
+        }
+
+        # Update the document with the provided data or create a new document if it doesn't exist
+        query_ref.set(updated_search_data, merge=True)
+    except Exception as e:
+        pass
+
+
+
+# checks if user is within search request limit today
+def can_user_search(db, phone_number):
+    #1. check to see if phone number exists if it doesnt, add a user, if it does do nothing
+    try: 
+        query_ref = db.collection('users').where('phone', '==', phone_number)
+        query_results = query_ref.get()
+        
+        # if the doc does not exist, the user should be able to search
+        if query_results.empty:
+            # Document does not currently exist
+            return True
+    
+        query_dict = query_results.to_dict()
+
+        # get timestamp of last search
+        last_search_timestamp = query_dict.get("last_search_timestamp")
+
+        # check if its been less than a day since the last search
+        seconds_in_a_day = 86400
+        if (time.time() - last_search_timestamp) < seconds_in_a_day:
+            return False 
+        
+        return True
+
+    except Exception as e:
+        return True
+
 
 # send sms message
 def send_sms(twilio_client, phone_number, msg):
