@@ -15,6 +15,7 @@ def update_user_with_search(db, phone_number, search_request_uuid):
     try: 
         query_ref = db.collection('users').where('phone', '==', phone_number).limit(1)
         query_snapshot = query_ref.get()
+        print("here 2")
 
         updated_search_data = {
             "last_search_timestamp": time.time(),
@@ -24,10 +25,12 @@ def update_user_with_search(db, phone_number, search_request_uuid):
 
         # if the doc does not exist, we create a new user
         if query_snapshot.empty:
+            print("here 3")
             # Document does not currently exist
             db.collection('users').document(str(uuid.uuid4())).set(updated_search_data)
         else:
             # Update the document with the provided data or create a new document if it doesn't exist
+            print("here 4")
             doc = query_snapshot[0]
             doc.reference.set(updated_search_data, merge=True)
     except Exception as e:
