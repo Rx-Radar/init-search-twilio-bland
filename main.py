@@ -60,18 +60,20 @@ def main(request):
     if not success:
         return out, code, headers
 
-    # Verify the user session token
-    user_session_token = request_data["user_session_token"]
-    verification_token = util.verify_user_token(token=user_session_token)
-    if not verification_token:
-        # If the user session token is incorrect, return a 401 Unauthorized response
-        return jsonify({'error': 'Unauthorized'}), 401, headers
+    # # Verify the user session token
+    # user_session_token = request_data["user_session_token"]
+    # verification_token = util.verify_user_token(token=user_session_token)
+    # if not verification_token:
+    #     # If the user session token is incorrect, return a 401 Unauthorized response
+    #     return jsonify({'error': 'Unauthorized'}), 401, headers
     
     # checks that the user is valid to place calls
     phone_number = request_data["phone_number"]
     user_can_search = util.can_user_search(db, phone_number)
     if not user_can_search: 
         return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
+    
+    print("user can search", user_can_search)
 
     # # Push new search to db
     # res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
@@ -88,6 +90,7 @@ def main(request):
     
     # update user doc with search information
     util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
+    print('completed')
 
     # return success message
     return jsonify({'message': 'Request is valid'}), 200, headers
