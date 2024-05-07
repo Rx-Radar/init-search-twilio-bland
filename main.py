@@ -72,8 +72,6 @@ def main(request):
     user_can_search = util.can_user_search(db, phone_number)
     if not user_can_search: 
         return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
-    
-    print("user can search", user_can_search)
 
     # # Push new search to db
     # res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
