@@ -34,18 +34,18 @@ twilio_client = Client(ACCOUNT_SID, AUTH_TOKEN)
 @functions_framework.http
 def main(request):
     
-    # Set CORS headers for the preflight request
-    if request.method == "OPTIONS":
-        # Allows GET requests from any origin with the Content-Type
-        # header and caches preflight response for an 3600s
-        headers = {
-            "Access-Control-Allow-Origin": "*", # change from "*" to "https://rx-radar.com" for production
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Max-Age": "3600",
-        }
+    # # Set CORS headers for the preflight request
+    # if request.method == "OPTIONS":
+    #     # Allows GET requests from any origin with the Content-Type
+    #     # header and caches preflight response for an 3600s
+    #     headers = {
+    #         "Access-Control-Allow-Origin": "*", # change from "*" to "https://rx-radar.com" for production
+    #         "Access-Control-Allow-Methods": "POST, OPTIONS",
+    #         "Access-Control-Allow-Headers": "Content-Type",
+    #         "Access-Control-Max-Age": "3600",
+    #     }
 
-        return ("", 204, headers)
+    #     return ("", 204, headers)
 
     # # Set CORS headers for the main request
     headers = {"Access-Control-Allow-Origin": "*"} # change from "*" to "https://rx-radar.com" for production
@@ -60,12 +60,14 @@ def main(request):
     if not success:
         return out, code, headers
 
-    # verify the user session token
-    user_session_token = request_data["user_session_token"]
-    verification_token = util.verify_user_token(token=user_session_token)
-    if not verification_token:
-        # If the user session token is incorrect, return a 401 Unauthorized response
-        return jsonify({'error': 'Unauthorized'}), 401, headers
+    # # verify the user session token
+    # user_session_token = request_data["user_session_token"]
+    # verification_token = util.verify_user_token(token=user_session_token)
+    # if not verification_token:
+    #     # If the user session token is incorrect, return a 401 Unauthorized response
+    #     return jsonify({'error': 'Unauthorized'}), 401, headers
+
+    verification_token = "testttttt"
     
     # checks that the user is valid to place calls 
     phone_number = request_data["phone_number"]
