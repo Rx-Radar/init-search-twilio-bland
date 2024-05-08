@@ -24,7 +24,7 @@ def update_user_with_search(db, phone_number, search_request_uuid):
         }
 
         # if the doc does not exist, we create a new user
-        if len(query_snapshot) > 0:
+        if len(query_snapshot) == 0:
             print("here 3")
             # Document does not currently exist
             db.collection('users').document(str(uuid.uuid4())).set(updated_search_data)
