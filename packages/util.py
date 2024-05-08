@@ -5,6 +5,7 @@ from flask import jsonify
 import time
 import uuid
 from urllib.parse import quote
+import requests
 
 account_sid = 'AC3d433258fe9b280b01ba83afe272f438'
 auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
@@ -85,10 +86,14 @@ def notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid):
 
 # places calls to all pharmacies
 # returns:  success, error/msg, code
-def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
+def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, lat, lon):
+    NUMBER_OF_PHARMACIES_TO_CALL = 10
     try: 
-        # Get the 'troy_pharmacies' collection
-        pharmacies = db.collection('albany_pharmacies').stream() # TODO change to troy pharmacies
+        # call get-pharmacies
+        pharmacies = get_pharmacies(lat=lat, lon=lon, num_pharmacies=NUMBER_OF_PHARMACIES_TO_CALL)
+
+        print("pharmss:", pharmacies)
+        
         number_calls_made = 0
         # call each pharmacy
         for pharmacy in pharmacies:
@@ -102,15 +107,17 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
                 pharm_phone = pharm_data.get('phone')
                 pharm_name = pharm_data.get('name')
 
+                print(pharm_name, pharm_phone)
+
                 # insert into calls db
-                success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
-                if not success:
-                    return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
-                # initialize bland call
-                success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
-                if not success:
-                    # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
-                    print(f'{call_uuid} log: Bland call failed')
+                # success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
+                # if not success:
+                #     return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
+                # # initialize bland call
+                # success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
+                # if not success:
+                #     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
+                #     print(f'{call_uuid} log: Bland call failed')
             except Exception as e:
                 return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
     
@@ -125,6 +132,23 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription):
 
     # successs case
     return True, jsonify({"message": "pharmacy calls placed"}), None
+
+# calls get-pharmacies enpoint based on user location
+def get_pharmacies(lat, lon, num_pharmacies):
+    url = "https://us-central1-rxradar.cloudfunctions.net/get-pharmacies"
+    payload = {
+        "lat": lat,
+        "lon": lon,
+        "num_pharmacies": num_pharmacies
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()  # Raise exception for 4xx or 5xx status codes
+        pharmacies = response.json()
+        return pharmacies
+    except requests.exceptions.RequestException as e:
+        raise ValueError("Could not call get-pharmacies endpoint")
 
 # places a call to pharmacy using twilio to dial, then redirects using redirect url.
 def call_bland(search_uuid, call_uuid, pharm_phone, pharm_name, prescription):
