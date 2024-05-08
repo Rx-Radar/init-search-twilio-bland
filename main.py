@@ -88,6 +88,9 @@ def main(request):
 
     if user_location == "Boston, MA":
         lat, lon = 42.3399, -71.0899 # Northeastern (lat, lon)
+
+    if user_location == "test":
+        lat, lon = 0.00, 0.00 # Northeastern (lat, lon)
     ## --------------------------------------------------------- ##
 
     # calls pharmacies
