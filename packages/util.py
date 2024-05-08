@@ -34,7 +34,7 @@ def update_user_with_search(db, phone_number, search_request_uuid):
             doc = query_snapshot[0]
             doc.reference.set(updated_search_data, merge=True)
     except Exception as e:
-        pass
+        print("errrrrrrrrr", e)
 
 
 
