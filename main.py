@@ -67,8 +67,8 @@ def main(request):
         # If the user session token is incorrect, return a 401 Unauthorized response
         return jsonify({'error': 'Unauthorized'}), 401, headers
     
-    # # checks that the user is valid to place calls 
-    # phone_number = request_data["phone_number"]
+    # checks that the user is valid to place calls 
+    phone_number = request_data["phone_number"]
     # user_can_search = util.can_user_search(db, phone_number)
     # if not user_can_search: 
     #     return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
