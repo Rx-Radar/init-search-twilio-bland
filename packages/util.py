@@ -111,6 +111,7 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
                 if not success:
                     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
                     print(f'{call_uuid} log: Bland call failed')
+                time.sleep(5)
             except Exception as e:
                 print({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
                 return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
