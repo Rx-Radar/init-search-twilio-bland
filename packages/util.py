@@ -25,16 +25,14 @@ def update_user_with_search(db, phone_number, search_request_uuid):
 
         # if the doc does not exist, we create a new user
         if len(query_snapshot) == 0:
-            print("here 3")
             # Document does not currently exist
             db.collection('users').document(str(uuid.uuid4())).set(updated_search_data)
         else:
             # Update the document with the provided data or create a new document if it doesn't exist
-            print("here 4")
             doc = query_snapshot[0]
             doc.reference.set(updated_search_data, merge=True)
     except Exception as e:
-        print("errrrrrrrrr", e)
+        pass
 
 
 
@@ -46,11 +44,11 @@ def can_user_search(db, phone_number):
         query_results = query_ref.get()
         
         # if the doc does not exist, the user should be able to search
-        if len(query_results) > 0:
+        if len(query_results) == 0:
             # Document does not currently exist
             return True
     
-        query_dict = query_results.to_dict()
+        query_dict = query_results[0].to_dict()
 
         # get timestamp of last search
         last_search_timestamp = query_dict.get("last_search_timestamp")
