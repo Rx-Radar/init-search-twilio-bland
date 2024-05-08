@@ -73,10 +73,10 @@ def main(request):
     if not user_can_search: 
         return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
 
-    # # Push new search to db
-    # res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
-    # if not res:
-    #     return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
+    # Push new search to db
+    res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
+    if not res:
+        return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
     
     ## ----------------- MVP **magic** ------------------------ ##
     # get users location and convert to lon and lat for mvp
@@ -90,8 +90,6 @@ def main(request):
         lat, lon = 42.3399, -71.0899 # Northeastern (lat, lon)
     ## --------------------------------------------------------- ##
 
-    search_request_uuid = "ddd"
-
     # calls pharmacies
     prescription = request_data["prescription"]
     success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, lat, lon)
@@ -100,7 +98,7 @@ def main(request):
     
     
     # update user doc with search information
-    # util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
+    util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
 
     # return success message
     return jsonify({'message': 'Request is valid'}), 200, headers

@@ -91,8 +91,6 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
     try: 
         # call get-pharmacies
         pharmacies = get_pharmacies(lat=lat, lon=lon, num_pharmacies=NUMBER_OF_PHARMACIES_TO_CALL)
-
-        print("pharmss:", pharmacies)
         
         number_calls_made = 0
         # call each pharmacy
@@ -107,17 +105,15 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
                 pharm_phone = pharm_data.get('phone')
                 pharm_name = pharm_data.get('name')
 
-                print(pharm_name, pharm_phone)
-
                 # insert into calls db
-                # success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
-                # if not success:
-                #     return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
-                # # initialize bland call
-                # success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
-                # if not success:
-                #     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
-                #     print(f'{call_uuid} log: Bland call failed')
+                success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
+                if not success:
+                    return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
+                # initialize bland call
+                success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
+                if not success:
+                    # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
+                    print(f'{call_uuid} log: Bland call failed')
             except Exception as e:
                 return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
     
