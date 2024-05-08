@@ -39,7 +39,7 @@ def update_user_with_search(db, phone_number, search_request_uuid):
 def can_user_search(db, phone_number):
     #1. check to see if phone number exists if it doesnt, add a user, if it does do nothing
     try: 
-        query_ref = db.collection('users').where('phone', '==', phone_number)
+        query_ref = db.collection('users').where('phone', '==', phone_number).limit(1)
         query_results = query_ref.get()
         
         # if the doc does not exist, the user should be able to search
