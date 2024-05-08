@@ -60,12 +60,12 @@ def main(request):
     if not success:
         return out, code, headers
 
-    # # Verify the user session token
-    # user_session_token = request_data["user_session_token"]
-    # verification_token = util.verify_user_token(token=user_session_token)
-    # if not verification_token:
-    #     # If the user session token is incorrect, return a 401 Unauthorized response
-    #     return jsonify({'error': 'Unauthorized'}), 401, headers
+    # Verify the user session token
+    user_session_token = request_data["user_session_token"]
+    verification_token = util.verify_user_token(token=user_session_token)
+    if not verification_token:
+        # If the user session token is incorrect, return a 401 Unauthorized response
+        return jsonify({'error': 'Unauthorized'}), 401, headers
     
     # checks that the user is valid to place calls
     phone_number = request_data["phone_number"]
@@ -73,16 +73,16 @@ def main(request):
     if not user_can_search: 
         return jsonify({'error': 'user tried >1 prescription searches today'}), 401, headers
 
-    # # Push new search to db
-    # res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
-    # if not res:
-    #     return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
+    # Push new search to db
+    res, search_request_uuid, exc = util.db_add_search(request_data, verification_token, db)
+    if not res:
+        return jsonify({"error": "Internal posting error", "exception": str(exc)}), 500, headers
     
-    # # calls pharmacies
-    # prescription = request_data["prescription"]
-    # success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription)
-    # if not success:
-    #     return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500, headers
+    # calls pharmacies
+    prescription = request_data["prescription"]
+    success, out, exc = util.call_all_pharmacies(db, twilio_client, search_request_uuid, prescription)
+    if not success:
+        return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500, headers
 
     search_request_uuid = 'ssss'
     

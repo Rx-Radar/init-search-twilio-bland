@@ -15,7 +15,6 @@ def update_user_with_search(db, phone_number, search_request_uuid):
     try: 
         query_ref = db.collection('users').where('phone', '==', phone_number).limit(1)
         query_snapshot = query_ref.get()
-        print("here 2")
 
         updated_search_data = {
             "last_search_timestamp": time.time(),
