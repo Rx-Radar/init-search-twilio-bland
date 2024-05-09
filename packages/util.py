@@ -2,7 +2,6 @@ from firebase_admin import auth, firestore
 from google.protobuf import timestamp_pb2
 from packages import pharmacy_map as PM
 from google.cloud import tasks_v2
-from urllib.parse import quote
 from twilio.rest import Client
 from flask import jsonify
 import requests
@@ -114,7 +113,6 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
                 if not success:
                     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
                     print(f'{call_uuid} log: Failed to queue call {str(exc)}')
-                time.sleep(5)
             except Exception as e:
                 print({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
                 return False, None, jsonify({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
