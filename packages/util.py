@@ -137,7 +137,7 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
         # Instantiate a client
         client = tasks_v2.CloudTasksClient()
         project = 'rxradar'
-        queue = 'rx-queue'
+        queue = 'create-call-queue'
         location = 'us-central1'
         url = 'https://us-central1-rxradar.cloudfunctions.net/create-call-twilio-bland'  # URL of the second Cloud Function
         service_account_email = 'bland-cloudtask-queuer@rxradar.iam.gserviceaccount.com'
