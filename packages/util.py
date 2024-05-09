@@ -1,11 +1,15 @@
 from firebase_admin import auth, firestore
+from google.protobuf import timestamp_pb2
 from packages import pharmacy_map as PM
+from google.cloud import tasks_v2
+from urllib.parse import quote
 from twilio.rest import Client
 from flask import jsonify
+import requests
+import datetime
 import time
 import uuid
-from urllib.parse import quote
-import requests
+import json
 
 account_sid = 'AC3d433258fe9b280b01ba83afe272f438'
 auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
@@ -100,17 +104,16 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
                 # Access specific fields
                 pharm_uuid = pharm_data.get('pharmacy_uuid')
                 pharm_phone = pharm_data.get('phone')
-                pharm_name = pharm_data.get('name')
 
                 # insert into calls db
                 success, call_uuid, exc = db_add_call(db, search_request_uuid, pharm_uuid)
                 if not success:
                     return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
                 # initialize bland call
-                success = call_bland(search_request_uuid, call_uuid, pharm_phone, pharm_name, prescription)
+                success, exc = insert_queue(search_request_uuid, call_uuid, pharm_phone, prescription)
                 if not success:
                     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
-                    print(f'{call_uuid} log: Bland call failed')
+                    print(f'{call_uuid} log: Failed to queue call {str(exc)}')
                 time.sleep(5)
             except Exception as e:
                 print({"error": "Internal error occured: failed to retrieve pharmacy details", "exception": str(e)})
@@ -129,6 +132,56 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
     # successs case
     return True, jsonify({"message": "pharmacy calls placed"}), None
 
+def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
+    try:
+        # Instantiate a client
+        client = tasks_v2.CloudTasksClient()
+        project = 'rxradar'
+        queue = 'rx-queue'
+        location = 'us-central1'
+        url = 'https://us-central1-rxradar.cloudfunctions.net/create-call-twilio-bland'  # URL of the second Cloud Function
+        service_account_email = 'bland-cloudtask-queuer@rxradar.iam.gserviceaccount.com'
+
+        # Construct the fully qualified queue name
+        parent = client.queue_path(project, location, queue)
+
+        # Payload for the second function
+        payload = {
+            "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
+            "request_uuid": search_uuid,
+            "name": prescription["name"],
+            "dosage": prescription["dosage"],
+            "brand": prescription["brand_or_generic"],
+            "quantity": prescription["quantity"],
+            "type": prescription["type"],
+            "pharm_phone": pharm_phone,
+        }
+        payload_bytes = json.dumps(payload).encode()
+        # Construct the request body
+        task = {
+            'http_request': {
+                'http_method': tasks_v2.HttpMethod.POST,
+                "headers": {"Content-Type": "application/json"},
+                'url': url,
+                'body': payload_bytes,
+                'oidc_token': {
+                    'service_account_email': service_account_email
+                }
+            }
+        }
+
+        d = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        timestamp = timestamp_pb2.Timestamp()
+        timestamp.FromDatetime(d)
+        task['schedule_time'] = timestamp
+
+        # Send create task request
+        client.create_task(request={"parent": parent, "task": task})
+        return True, None
+    except Exception as e:
+        False, (jsonify({'error': f'Could not queue the task {e}'}), 400)
+     
+
 # calls get-pharmacies enpoint based on user location
 def get_pharmacies(lat, lon, num_pharmacies):
     url = "https://us-central1-rxradar.cloudfunctions.net/get-pharmacies"
@@ -145,52 +198,6 @@ def get_pharmacies(lat, lon, num_pharmacies):
         return pharmacies
     except requests.exceptions.RequestException as e:
         raise ValueError("Could not call get-pharmacies endpoint")
-
-# places a call to pharmacy using twilio to dial, then redirects using redirect url.
-def call_bland(search_uuid, call_uuid, pharm_phone, pharm_name, prescription):
-    #pass in pharm name as we will use this for extensions later
-    try:
-        parameters = {
-            "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
-            "request_uuid": search_uuid,
-            "name": prescription["name"],
-            "dosage": prescription["dosage"],
-            "brand": prescription["brand_or_generic"],
-            "quantity": prescription["quantity"],
-            "type": prescription["type"]
-        }
-        
-        # Convert parameters to URL query string 
-        query_string = "&amp;".join([f"{key}={quote(value)}" for key, value in parameters.items()])
-
-
-        # TwiML
-        twiml = f"""
-        <Response>
-            <Play digits="{PM.EXT_CVS}"></Play>
-            <Redirect>https://us-central1-rxradar.cloudfunctions.net/transfer-twilio-bland?{query_string}</Redirect>
-        </Response>
-        """
-
-        """
-        Note: in cloud function, extract url params like:
-            name = request.args.get('name')
-            dosage = request.args.get('dosage')
-            brand = request.args.get('brand')
-            quantity = request.args.get('quantity')
-            medication_type = request.args.get('type')
-        """
-
-        client.calls.create(
-            twiml=twiml,  # TwiML content as URL data
-            to=pharm_phone,
-            from_='+18337034125'
-        )
-        # call plased succesfully
-        return True
-    except Exception as e:
-        print({"error": "Failed while placing hte call ", "exception": str(e)})
-        return  False
 
 # adds call to db
 def db_add_call(db, search_request_uuid, pharm_uuid):
