@@ -76,6 +76,8 @@ def main(request):
     #     # If the user session token is incorrect, return a 401 Unauthorized response
     #     return jsonify({'error': 'Unauthorized'}), 401, headers
 
+
+    
     verification_token = "testttttt"
     
     # checks that the user is valid to place calls 
@@ -114,6 +116,9 @@ def main(request):
     # update user doc with search information
     util.update_user_with_search(db=db, phone_number=phone_number, search_request_uuid=search_request_uuid)
 
+    util.send_sms(twilio_client, "+12032248444", f"A new user has searched for a medication: {search_request_uuid}")
+    util.send_sms(twilio_client, "+12037674296", f"A new user has searched for a medication: {search_request_uuid}")
+    
     # return success message
     return jsonify({'message': 'Request is valid'}), 200, headers
 
