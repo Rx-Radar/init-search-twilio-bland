@@ -1,6 +1,5 @@
 from firebase_admin import auth, firestore
 from google.protobuf import timestamp_pb2
-from packages import pharmacy_map as PM
 from google.cloud import tasks_v2
 from twilio.rest import Client
 from flask import jsonify
@@ -9,15 +8,39 @@ import datetime
 import time
 import uuid
 import json
+import yaml
+import os
 
-account_sid = 'AC3d433258fe9b280b01ba83afe272f438'
-auth_token = '2cc106ae7b360c99a7be11cc4ea77c07'
-client = Client(account_sid, auth_token)
+
+def load_yaml_file(filepath):
+    with open(filepath, 'r') as file:
+        data = yaml.safe_load(file)
+    return data
+
+# Use the function to load the configuration
+config = load_yaml_file('config.yaml')
+
+env = os.getenv("deployment_env")
+
+TWILIO_ACCOUNT_SID = config[env]["twilio"]["account_sid"] 
+TWILIO_AUTH_TOKEN = config[env]["twilio"]["auth_token"] 
+TWILIO_PHONE_NUMBER = config[env]["twilio"]["phone_number"] 
+
+FIREBASE_USERS_DB = config[env]["firebase"]["users_db"]
+FIREBASE_CALLS_DB = config[env]["firebase"]["calls_db"]
+FIREBASE_PHARMACY_DB = config[env]["firebase"]["pharmacy_db"]
+FIREBASE_SEARCH_REQUESTS_DB = config[env]["firebase"]["search_requests_db"]
+
+CF_GET_PHARMACIES = config[env]["cloud_functions"]["get_pharmacies"]
+CF_CREATE_CALL = config[env]["cloud_functions"]["create_call"]
+
+
+client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # records the search in the user document
 def update_user_with_search(db, phone_number, search_request_uuid):
     try: 
-        query_ref = db.collection('users').where('phone', '==', phone_number).limit(1)
+        query_ref = db.collection(FIREBASE_USERS_DB).where('phone', '==', phone_number).limit(1)
         query_snapshot = query_ref.get()
 
         updated_search_data = {
@@ -29,7 +52,7 @@ def update_user_with_search(db, phone_number, search_request_uuid):
         # if the doc does not exist, we create a new user
         if len(query_snapshot) == 0:
             # Document does not currently exist
-            db.collection('users').document(str(uuid.uuid4())).set(updated_search_data)
+            db.collection(FIREBASE_USERS_DB).document(str(uuid.uuid4())).set(updated_search_data)
         else:
             # Update the document with the provided data or create a new document if it doesn't exist
             doc = query_snapshot[0]
@@ -37,13 +60,11 @@ def update_user_with_search(db, phone_number, search_request_uuid):
     except Exception as e:
         pass
 
-
-
 # checks if user is within search request limit today
 def can_user_search(db, phone_number):
     #1. check to see if phone number exists if it doesnt, add a user, if it does do nothing
     try: 
-        query_ref = db.collection('users').where('phone', '==', phone_number).limit(1)
+        query_ref = db.collection(FIREBASE_USERS_DB).where('phone', '==', phone_number).limit(1)
         query_results = query_ref.get()
         
         # if the doc does not exist, the user should be able to search
@@ -66,10 +87,8 @@ def can_user_search(db, phone_number):
     except Exception as e:
         return True
 
-
 # send sms message
 def send_sms(twilio_client, phone_number, msg):
-  TWILIO_PHONE_NUMBER = "+18337034125"
   try: 
     new_message = twilio_client.messages.create(to=phone_number, from_= TWILIO_PHONE_NUMBER, body=msg)
   except Exception as e: 
@@ -78,7 +97,7 @@ def send_sms(twilio_client, phone_number, msg):
 def notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid):
     try: 
         # Get the 'troy_pharmacies' collection
-        search_request_ref = db.collection('search_requests').document(search_request_uuid) 
+        search_request_ref = db.collection(FIREBASE_SEARCH_REQUESTS_DB).document(search_request_uuid) 
         search_request_doc = search_request_ref.get().to_dict()
 
         user_phone_number = search_request_doc.get("user_id") # user phone number stored as user_id in search_request doc
@@ -120,7 +139,7 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
         if number_calls_made == 0:
             notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid)
         else:
-            db.collection('search_requests').document(search_request_uuid).update({"unfinished_calls" : number_calls_made})
+            db.collection(FIREBASE_SEARCH_REQUESTS_DB).document(search_request_uuid).update({"unfinished_calls" : number_calls_made})
 
                     
     except Exception as e: 
@@ -137,7 +156,7 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
         project = 'rxradar'
         queue = 'create-call-queue'
         location = 'us-central1'
-        url = 'https://us-central1-rxradar.cloudfunctions.net/create-call-twilio-bland'  # URL of the second Cloud Function
+        url = CF_CREATE_CALL # URL of the second Cloud Function
         service_account_email = 'bland-cloudtask-queuer@rxradar.iam.gserviceaccount.com'
 
         # Construct the fully qualified queue name
@@ -182,7 +201,7 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
 
 # calls get-pharmacies enpoint based on user location
 def get_pharmacies(lat, lon, num_pharmacies):
-    url = "https://us-central1-rxradar.cloudfunctions.net/get-pharmacies"
+    url = CF_GET_PHARMACIES
     payload = {
         "lat": lat,
         "lon": lon,
@@ -215,7 +234,7 @@ def db_add_call(db, search_request_uuid, pharm_uuid):
             "recording": None,
             "transcript": None
         }
-        db.collection('calls').document(call_uuid).set(data)
+        db.collection(FIREBASE_CALLS_DB).document(call_uuid).set(data)
         return  True, call_uuid, None
 
     except Exception as e:
@@ -261,7 +280,7 @@ def db_add_search(req_obj, verfication_token, db):
         }
 
         # Add the data to a new document in the 'medications' collection
-        db.collection("search_requests").document(unique_id).set(data)
+        db.collection(FIREBASE_SEARCH_REQUESTS_DB).document(unique_id).set(data)
         return True, unique_id, None
     
     # Catch any errors pushing to db

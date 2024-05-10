@@ -1,21 +1,30 @@
 import functions_framework
-from flask import jsonify, request
-from firebase_admin import credentials, firestore, auth, initialize_app
+from flask import jsonify
+from firebase_admin import credentials, firestore, initialize_app
 from packages import util
-import twilio
 from twilio.rest import Client
-import json
+import yaml
+import os
 
+def load_yaml_file(filepath):
+    with open(filepath, 'r') as file:
+        data = yaml.safe_load(file)
+    return data
+
+# Use the function to load the configuration
+config = load_yaml_file('config.yaml')
+
+env = os.getenv("deployment_env")
+
+TWILIO_ACCOUNT_SID = config[env]["twilio"]["account_sid"] 
+TWILIO_AUTH_TOKEN = config[env]["twilio"]["auth_token"] 
 
 # Initialize Firebase Admin SDK with the service account key
 cred = credentials.Certificate("firebase_creds.json")  # Update with your service account key file 
 initialize_app(cred)
 db = firestore.client() # set firestore client
 
-# initialize twilio client for SMS
-ACCOUNT_SID = 'AC3d433258fe9b280b01ba83afe272f438'
-AUTH_TOKEN = '2cc106ae7b360c99a7be11cc4ea77c07'
-twilio_client = Client(ACCOUNT_SID, AUTH_TOKEN)
+twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 """
 {
