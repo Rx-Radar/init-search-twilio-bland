@@ -9,7 +9,7 @@ steps:
     args:
       - 'functions'
       - 'deploy'
-      - '${_ENV}init-search-twilio-bland'  # Replace with your function name
+      - '${_ENV}-init-search-twilio-bland'  # Replace with your function name
       - '--entry-point'
       - 'main'  # Replace with your function's entry point
       - '--runtime'
