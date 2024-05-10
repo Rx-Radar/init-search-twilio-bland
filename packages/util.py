@@ -273,7 +273,7 @@ def db_add_search(req_obj, verfication_token, db):
                 "quantity": med_quantity,
                 "type": med_type
             },
-            "notified_user": False,
+            "contains_fillable": False,
             "calls_remaining": 0,
             "calls" : [],
             "epoch_initiated": epoch_initiated,
