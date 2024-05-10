@@ -28,7 +28,6 @@ TWILIO_PHONE_NUMBER = config[env]["twilio"]["phone_number"]
 
 FIREBASE_USERS_DB = config[env]["firebase"]["users_db"]
 FIREBASE_CALLS_DB = config[env]["firebase"]["calls_db"]
-FIREBASE_PHARMACY_DB = config[env]["firebase"]["pharmacy_db"]
 FIREBASE_SEARCH_REQUESTS_DB = config[env]["firebase"]["search_requests_db"]
 
 CF_GET_PHARMACIES = config[env]["cloud_functions"]["get_pharmacies"]
