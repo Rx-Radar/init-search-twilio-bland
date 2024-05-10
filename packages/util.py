@@ -127,7 +127,7 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
                 if not success:
                     return False, None, jsonify({"error": "Internal error occured: failed to create call in calls db.", "exception": str(exc)})
                 # initialize bland call
-                success, exc = insert_queue(search_request_uuid, call_uuid, pharm_phone, prescription)
+                success, exc = insert_queue(search_request_uuid, call_uuid, pharm_phone, prescription, number_calls_made)
                 if not success:
                     # bland call could not be placed due to bland internal error --> decrease the number of calls placed by one + log 
                     print(f'{call_uuid} log: Failed to queue call {str(exc)}')
@@ -148,7 +148,7 @@ def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, la
     # successs case
     return True, jsonify({"message": "pharmacy calls placed"}), None
 
-def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
+def insert_queue(search_uuid, call_uuid, pharm_phone, prescription, number_calls_made):
     try:
         # Instantiate a client
         client = tasks_v2.CloudTasksClient()
@@ -186,7 +186,7 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription):
             }
         }
 
-        d = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        d = datetime.datetime.utcnow() + datetime.timedelta(seconds=10*number_calls_made)
         timestamp = timestamp_pb2.Timestamp()
         timestamp.FromDatetime(d)
         task['schedule_time'] = timestamp
