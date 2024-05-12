@@ -14,7 +14,6 @@ steps:
       - 'main'  # Replace with your function's entry point
       - '--runtime'
       - 'python311'  # Replace with your function's runtime environment
-      - '--trigger-http'  # Assuming an HTTP trigger
       - '--allow-unauthenticated'  # Optional based on your authentication needs
       - '--region'
       - 'us-central1'
