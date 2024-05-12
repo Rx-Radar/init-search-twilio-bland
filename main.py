@@ -43,6 +43,9 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 @functions_framework.http
 def main(request):
     
+    
+    print(request)
+    return jsonify({'message': 'Request is valid'}), 200
     # # Set CORS headers for the preflight request
     # if request.method == "OPTIONS":
     #     # Allows GET requests from any origin with the Content-Type
