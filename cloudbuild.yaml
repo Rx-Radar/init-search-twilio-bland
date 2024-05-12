@@ -16,7 +16,7 @@ steps:
       - 'python311'  # Replace with your function's runtime environment
       - '--allow-unauthenticated'  # Optional based on your authentication needs
       - '--region'
-      - 'us-central1'
+      - 'nam5'
       - '--gen2'
       - '--set-env-vars'  
       - 'deployment_env=${_ENV}'  # Define your key-value pairs
