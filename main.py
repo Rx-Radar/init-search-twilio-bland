@@ -76,8 +76,16 @@ def main(cloud_event: CloudEvent):
     print(firestore_payload.old_value)
 
     print("\nNew value:")
-    print(firestore_payload.value)
-    
+    try:
+        print(firestore_payload.value.fields["search_request_uuid"])
+    except Exception as e:
+        print(e)
+        
+    try:
+        print(firestore_payload.value.fields["user_uuid"])
+    except Exception as e:
+        print(e)
+        
     return ""   
     search_request_uuid = data["search_request_uuid"]
     
