@@ -20,9 +20,9 @@ steps:
       - '--gen2'
       - '--set-env-vars'  
       - 'deployment_env=${_ENV}'  # Define your key-value pairs
-      - '--trigger-event-filters=type=google.cloud.firestore.document.v1.written'
+      - '--trigger-event-filters=type=google.cloud.firestore.document.v1.created'
       - '--trigger-event-filters=database=(default)'
-      - '--trigger-event-filters-path-pattern=document=${_ENV}_search_request/{search_request_uuid}'
+      - '--trigger-event-filters-path-pattern=document=${_ENV}_search_requests/{search_request_uuid}'
 
 substitutions:
   _ENV: 'dev'
