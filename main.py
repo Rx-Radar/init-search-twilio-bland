@@ -7,6 +7,8 @@ from packages import util
 from twilio.rest import Client
 import functions_framework
 from google.events.cloud import firestore as ge_firestore
+import base64
+import json
 import yaml
 import os
 
@@ -31,6 +33,17 @@ db = firestore.client() # set firestore client
 
 twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
+
+def safe_load_json(s: str) -> dict | str:
+    try:
+        return json.loads(s)
+    except (json.decoder.JSONDecodeError, TypeError):
+        return s
+
+
+def decode_message(cloud_event: CloudEvent) -> dict | str:
+    data = base64.b64decode(cloud_event.data).decode("utf-8")
+    return safe_load_json(data)
 """
 {
     "user_session_token": "12345abcde",
@@ -52,7 +65,9 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 def main(cloud_event: CloudEvent):
 
     data = cloud_event.data    
-    print(data["prescription"])
+    print(data)
+    print(base64.b64decode(data).decode("utf-8"))
+    
     
     search_request_uuid = data["search_request_uuid"]
     
