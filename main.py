@@ -7,7 +7,6 @@ from packages import util
 from twilio.rest import Client
 import functions_framework
 from google.events.cloud import firestore as ge_firestore
-from google.cloud.firestore_v1.proto import document_pb2
 import yaml
 import os
 
