@@ -6,7 +6,7 @@ from firebase_admin import credentials, firestore, initialize_app
 from packages import util
 from twilio.rest import Client
 import functions_framework
-import google.cloud
+from google.events.cloud import firestore as ge_firestore
 import yaml
 import os
 
@@ -47,7 +47,7 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent):
     
-    firestore_payload = firestore.DocumentEventData()
+    firestore_payload = ge_firestore.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
     print(firestore_payload)
     return jsonify({'message': 'Request is valid'}), 200
