@@ -52,13 +52,13 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 def main(cloud_event: CloudEvent):
 
     data = cloud_event.data    
-    print(data.get("prescription"))
+    print(data["prescription"])
     
-    search_request_uuid = data.get("search_request_uuid")
+    search_request_uuid = data["search_request_uuid"]
     
     
     
-    prescription = data.get("prescription")
+    prescription = data["prescription"]
     user_location = data.get("user_location")
     lat = user_location["lat"]
     lon = user_location["lon"]
