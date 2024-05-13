@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore, initialize_app
 from packages import util
 from twilio.rest import Client
 import functions_framework
+import google.cloud
 import yaml
 import os
 
@@ -43,12 +44,12 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     }
 }
 """
-@functions_framework.http
-def main(data, context):
+@functions_framework.cloud_event
+def main(cloud_event: CloudEvent):
     
-    
-    print(data)
-    print(context)
+    firestore_payload = firestore.DocumentEventData()
+    firestore_payload._pb.ParseFromString(cloud_event.data)
+    print(firestore_payload)
     return jsonify({'message': 'Request is valid'}), 200
     # # Set CORS headers for the preflight request
     # if request.method == "OPTIONS":
