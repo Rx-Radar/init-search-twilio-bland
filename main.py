@@ -6,7 +6,6 @@ from firebase_admin import credentials, firestore, initialize_app
 from packages import util
 from twilio.rest import Client
 import functions_framework
-from google.cloud.firestore import firestore as gfirestore
 import yaml
 import os
 
@@ -50,7 +49,6 @@ def main(data, context):
     
     print(data)
     print(context)
-    
     return jsonify({'message': 'Request is valid'}), 200
     # # Set CORS headers for the preflight request
     # if request.method == "OPTIONS":
