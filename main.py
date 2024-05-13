@@ -64,11 +64,21 @@ def decode_message(cloud_event: CloudEvent) -> dict | str:
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent):
 
-    data = cloud_event.data    
-    print(data)
-    print(base64.b64decode(data).decode("utf-8"))
+    firestore_payload = firestore.DocumentEventData()
+    firestore_payload._pb.ParseFromString(cloud_event.data)
+
+
+
+    data = None
+    print(f"Function triggered by change to: {cloud_event['source']}")
+
+    print("\nOld value:")
+    print(firestore_payload.old_value)
+
+    print("\nNew value:")
+    print(firestore_payload.value)
     
-    
+    return ""   
     search_request_uuid = data["search_request_uuid"]
     
     
