@@ -55,13 +55,15 @@ def main(cloud_event: CloudEvent):
     firestore_payload._pb.ParseFromString(cloud_event.data)
     
     
-    search_request_uuid = firestore_payload["fields"]["key"]
-    request_data = firestore_payload["fields"]["value"]
+    print(firestore_payload.get("prescription"))
     
-    prescription = request_data["prescription"]
-    lat = request_data["user_location"]["lat"]
-    lon = request_data["user_location"]["lon"]
-    user_uuid = request_data["user_uuid"]
+    search_request_uuid = firestore_payload.get("search_request_uuid")
+    
+    prescription = firestore_payload.get("prescription")
+    user_location = firestore_payload.get("user_location")
+    lat = user_location["lat"]
+    lon = user_location["lon"]
+    user_uuid = firestore_payload.get("user_uuid")
     
     user_doc = db.collection(FIREBASE_USERS_DB).document(user_uuid).get()
 
