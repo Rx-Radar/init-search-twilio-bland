@@ -7,6 +7,7 @@ from packages import util
 from twilio.rest import Client
 import functions_framework
 from google.events.cloud import firestore as ge_firestore
+from google.cloud.firestore_v1.proto import document_pb2
 import yaml
 import os
 
@@ -50,20 +51,19 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 """
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent):
+
+    data = cloud_event.data    
+    print(data.get("prescription"))
     
-    firestore_payload = ge_firestore.DocumentEventData()
-    firestore_payload._pb.ParseFromString(cloud_event.data)
+    search_request_uuid = data.get("search_request_uuid")
     
     
-    print(firestore_payload.get("prescription"))
     
-    search_request_uuid = firestore_payload.get("search_request_uuid")
-    
-    prescription = firestore_payload.get("prescription")
-    user_location = firestore_payload.get("user_location")
+    prescription = data.get("prescription")
+    user_location = data.get("user_location")
     lat = user_location["lat"]
     lon = user_location["lon"]
-    user_uuid = firestore_payload.get("user_uuid")
+    user_uuid = data.get("user_uuid")
     
     user_doc = db.collection(FIREBASE_USERS_DB).document(user_uuid).get()
 
