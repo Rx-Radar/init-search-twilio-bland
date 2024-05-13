@@ -37,54 +37,22 @@ CF_CREATE_CALL = config[env]["cloud_functions"]["create_call"]
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # records the search in the user document
-def update_user_with_search(db, phone_number, search_request_uuid):
+def update_user_with_search(db, user_uuid, search_request_uuid):
     try: 
-        query_ref = db.collection(FIREBASE_USERS_DB).where('phone', '==', phone_number).limit(1)
+        query_ref = db.collection(FIREBASE_USERS_DB).document(user_uuid)
         query_snapshot = query_ref.get()
 
         updated_search_data = {
             "last_search_timestamp": time.time(),
             "search_requests": firestore.ArrayUnion([search_request_uuid]),
-            "phone": phone_number
         }
 
-        # if the doc does not exist, we create a new user
-        if len(query_snapshot) == 0:
-            # Document does not currently exist
-            db.collection(FIREBASE_USERS_DB).document(str(uuid.uuid4())).set(updated_search_data)
-        else:
-            # Update the document with the provided data or create a new document if it doesn't exist
-            doc = query_snapshot[0]
-            doc.reference.set(updated_search_data, merge=True)
+    
+        # Update the document with the provided data or create a new document if it doesn't exist
+        doc = query_snapshot[0]
+        doc.reference.set(updated_search_data, merge=True)
     except Exception as e:
         pass
-
-# checks if user is within search request limit today
-def can_user_search(db, phone_number):
-    #1. check to see if phone number exists if it doesnt, add a user, if it does do nothing
-    try: 
-        query_ref = db.collection(FIREBASE_USERS_DB).where('phone', '==', phone_number).limit(1)
-        query_results = query_ref.get()
-        
-        # if the doc does not exist, the user should be able to search
-        if len(query_results) == 0:
-            # Document does not currently exist
-            return True
-    
-        query_dict = query_results[0].to_dict()
-
-        # get timestamp of last search
-        last_search_timestamp = query_dict.get("last_search_timestamp")
-
-        # check if its been less than a day since the last search
-        seconds_in_a_day = 86400
-        if (time.time() - last_search_timestamp) < seconds_in_a_day:
-            return False 
-        
-        return True
-
-    except Exception as e:
-        return True
 
 # send sms message
 def send_sms(twilio_client, phone_number, msg):
@@ -197,7 +165,6 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription, number_calls
     except Exception as e:
         False, (jsonify({'error': f'Could not queue the task {e}'}), 400)
      
-
 # calls get-pharmacies enpoint based on user location
 def get_pharmacies(lat, lon, num_pharmacies):
     url = CF_GET_PHARMACIES
@@ -233,6 +200,7 @@ def db_add_call(db, search_request_uuid, pharm_uuid):
             "recording": None,
             "transcript": None
         }
+        
         db.collection(FIREBASE_CALLS_DB).document(call_uuid).set(data)
         return  True, call_uuid, None
 
@@ -240,108 +208,3 @@ def db_add_call(db, search_request_uuid, pharm_uuid):
         print({"error": "Failed while adding call to the database ", "exception": str(e)})
 
         return False, None, str(e)
-
-# creates a new search request
-def db_add_search(req_obj, verfication_token, db):
-    try:
-        # Generate a unique ID for the document
-        unique_id = str(uuid.uuid4())
-
-        # Current epoch time
-        epoch_initiated = int(time.time())
-
-        # prescription object
-        user_location = req_obj["user_location"]
-        phone_number = req_obj["phone_number"]
-        med_name = req_obj["prescription"]["name"] 
-        med_dosage = req_obj["prescription"]["dosage"]
-        med_brand = req_obj["prescription"]["brand_or_generic"]
-        med_quantity = req_obj["prescription"]["quantity"]
-        med_type = req_obj["prescription"]["type"]
-
-        # Data to be added
-        data = {
-            "search_request_uuid": unique_id,
-            "user_id": phone_number,
-            "user_location": user_location,
-            "user_token": verfication_token,
-            "prescription": {
-                "name": med_name,
-                "dosage": med_dosage,
-                "brand": med_brand,
-                "quantity": med_quantity,
-                "type": med_type
-            },
-            "contains_fillable": False,
-            "calls_remaining": 0,
-            "calls" : [],
-            "epoch_initiated": epoch_initiated,
-        }
-
-        # Add the data to a new document in the 'medications' collection
-        db.collection(FIREBASE_SEARCH_REQUESTS_DB).document(unique_id).set(data)
-        return True, unique_id, None
-    
-    # Catch any errors pushing to db
-    except Exception:
-        return False, None, Exception
-
-
-# verifies user session token
-def verify_user_token(token):
-    try:
-        decoded_token = auth.verify_id_token(token)
-        uid = decoded_token['uid']
-        # The token is valid
-        return uid
-    except auth.InvalidIdTokenError:
-        # The token is invalid
-        return None
-
-
-# validates user medication request body
-def validate_request(request_data):
-    required_fields = ['user_session_token', 'phone_number', 'user_location', 'prescription'] # required fields
-    prescription_fields = ['name', 'dosage', 'brand_or_generic', 'quantity', 'type'] # required fields within medication
-
-    # Check if all required fields exist
-    for field in required_fields:
-        if field not in request_data:
-            return False, jsonify({'error': f'Missing required field: {field}'}), 400
-
-    # Check if the types are correct
-    if not isinstance(request_data.get('user_session_token'), str):
-        return False, jsonify({'error': 'user_session_token must be a string'}), 400
-
-    if not isinstance(request_data.get('phone_number'), str):
-        return False, jsonify({'error': 'phone_number must be a string'}), 400
-
-    if not isinstance(request_data.get('user_location'), str):
-        return False, jsonify({'error': 'user_location must be a string'}), 400
-
-    # Check prescription fields and types
-    prescription = request_data.get('prescription')
-
-    # check if prescription is empty 
-    if not prescription:
-        return False, jsonify({'error': 'prescription object can not be empty'}), 400
-
-    # check that all the prescription fields exist
-    for field in prescription_fields:
-        if field not in prescription:
-            return False, jsonify({'error': f'Missing required field inside prescription: {field}'}), 400
-
-    # check that prescription object field types are valid
-    if not isinstance(prescription.get('name'), str):
-        return False, jsonify({'error': 'prescription name must be a string'}), 400
-    if not isinstance(prescription.get('dosage'), str):
-        return False, jsonify({'error': 'prescription dosage must be a string'}), 400
-    if not isinstance(prescription.get('brand_or_generic'), str):
-        return False, jsonify({'error': 'prescription brand_or_generic must be a string'}), 400
-    if not isinstance(prescription.get('quantity'), str):
-        return False, jsonify({'error': 'prescription quantity must be a string'}), 400
-    if not isinstance(prescription.get('type'), str):
-        return False, jsonify({'error': 'prescription type must be a string'}), 400
-
-    # on valid
-    return True, None, 200
