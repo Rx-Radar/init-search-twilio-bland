@@ -64,7 +64,7 @@ def decode_message(cloud_event: CloudEvent) -> dict | str:
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent):
 
-    firestore_payload = firestore.DocumentEventData()
+    firestore_payload = ge_firestore.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
 
