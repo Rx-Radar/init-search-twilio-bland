@@ -41,10 +41,13 @@ def update_user_with_search(db, user_uuid, search_request_uuid):
     try: 
         query_ref = db.collection(FIREBASE_USERS_DB).document(user_uuid)
         query_snapshot = query_ref.get()
+        
+        new_search_credits = query_snapshot["search_credits"]-1
 
         updated_search_data = {
             "last_search_timestamp": time.time(),
             "search_requests": firestore.ArrayUnion([search_request_uuid]),
+            "search_credits": new_search_credits
         }
 
     
