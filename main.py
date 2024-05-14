@@ -84,6 +84,8 @@ def main(cloud_event: CloudEvent):
         return jsonify({'error': 'Calling pharmacies Failed', 'exception': str(exc)}), 500
     
     
+    util.send_sms(twilio_client, phone_number, "RxRadar Update:\nWe've received your request and are searching for your medication.")
+    
     # update user doc with search information
     util.update_user_with_search(db=db, user_uuid=user_uuid, search_request_uuid=search_request_uuid)
 
