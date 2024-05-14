@@ -68,7 +68,7 @@ def main(cloud_event: CloudEvent):
     prescription = firestore_dict["prescription"]["mapValue"]["fields"]
     user_location = firestore_dict["user_location"]["mapValue"]["fields"]
     lat = user_location["lat"]["doubleValue"]
-    lon = user_location["lon"]["doubleValue"]
+    lon = user_location["lon"]["doubleValue"] 
     
     user_uuid = firestore_dict["user_uuid"]["stringValue"]
 
