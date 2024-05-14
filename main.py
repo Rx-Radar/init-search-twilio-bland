@@ -33,17 +33,6 @@ db = firestore.client() # set firestore client
 
 twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-
-def safe_load_json(s: str) -> dict | str:
-    try:
-        return json.loads(s)
-    except (json.decoder.JSONDecodeError, TypeError):
-        return s
-
-
-def decode_message(cloud_event: CloudEvent) -> dict | str:
-    data = base64.b64decode(cloud_event.data).decode("utf-8")
-    return safe_load_json(data)
 """
 {
     "user_session_token": "12345abcde",
@@ -67,36 +56,17 @@ def main(cloud_event: CloudEvent):
     firestore_payload = ge_firestore.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
-
-
-    data = None
-    print(f"Function triggered by change to: {cloud_event['source']}")
-
-    print("\nOld value:")
-    print(firestore_payload.old_value)
-
-    print("\nNew value:")
-    try:
-        print(firestore_payload.value.fields["search_request_uuid"])
-    except Exception as e:
-        print(e)
-        
-    try:
-        print(firestore_payload.value.fields["user_uuid"])
-    except Exception as e:
-        print(e)
-        
-    return ""   
-    search_request_uuid = data["search_request_uuid"]
+    firestore_obj = firestore_payload.value
     
+    search_request_uuid = firestore_obj.fields["search_request_uuid"].
     
-    
-    prescription = data["prescription"]
-    user_location = data.get("user_location")
+    prescription = firestore_obj.fields["prescription"]
+    user_location = firestore_obj.fields["user_location"]
     lat = user_location["lat"]
     lon = user_location["lon"]
-    user_uuid = data.get("user_uuid")
-    
+    user_uuid = firestore_obj.fields["user_uuid"]
+
+
     user_doc = db.collection(FIREBASE_USERS_DB).document(user_uuid).get()
 
     phone_number = user_doc.to_dict()["phone"]

@@ -78,7 +78,7 @@ def notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid):
 
 # places calls to all pharmacies
 # returns:  success, error/msg, code
-def call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, lat, lon):
+def     call_all_pharmacies(db, twilio_client, search_request_uuid, prescription, lat, lon):
     NUMBER_OF_PHARMACIES_TO_CALL = 10
     try: 
         # call get-pharmacies
@@ -136,11 +136,11 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription, number_calls
         payload = {
             "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
             "request_uuid": search_uuid,
-            "name": prescription["name"],
-            "dosage": prescription["dosage"],
-            "brand": prescription["brand_or_generic"],
-            "quantity": prescription["quantity"],
-            "type": prescription["type"],
+            "name": prescription.fields["name"].string_value,
+            "dosage": prescription.fields["dosage"].string_value,
+            "brand": prescription.fields["brand"].string_value,
+            "quantity": prescription.fields["quantity"].string_value,
+            "type": prescription.fields["type"].string_value,
             "pharm_phone": pharm_phone,
         }
         payload_bytes = json.dumps(payload).encode()
