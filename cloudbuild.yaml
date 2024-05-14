@@ -14,13 +14,16 @@ steps:
       - 'main'  # Replace with your function's entry point
       - '--runtime'
       - 'python311'  # Replace with your function's runtime environment
-      - '--trigger-http'  # Assuming an HTTP trigger
       - '--allow-unauthenticated'  # Optional based on your authentication needs
       - '--region'
       - 'us-central1'
       - '--gen2'
-      - '--set-env-vars'  # Set environment variables here
+      - '--set-env-vars'  
       - 'deployment_env=${_ENV}'  # Define your key-value pairs
+      - '--trigger-event-filters=type=google.cloud.firestore.document.v1.created'
+      - '--trigger-event-filters=database=(default)'
+      - '--trigger-event-filters-path-pattern=document=${_ENV}_search_requests/{search_request_uuid}'
+
 substitutions:
   _ENV: 'dev'
 timeout: '1600s'  # Optional: Adjust as necessary for the complexity of the deployment

@@ -5,3 +5,5 @@ twilio==9.0.2
 google-cloud-tasks==2.16.3
 protobuf==4.25.3
 pyyaml==6.0.1
+google-cloud-firestore==2.16.0
+google-events==0.12.0
