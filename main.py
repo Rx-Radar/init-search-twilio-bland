@@ -4,6 +4,7 @@ from cloudevents.http import CloudEvent
 from flask import jsonify
 from firebase_admin import credentials, firestore, initialize_app
 from google.protobuf.json_format import MessageToDict
+from google.protobuf.json_format import MessageToDict
 from packages import util
 from twilio.rest import Client
 import functions_framework
@@ -53,12 +54,18 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 """
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent):
-
+   # Create an instance of the Firestore DocumentEventData
     firestore_payload = ge_firestore.DocumentEventData()
+    
+    # Parse the CloudEvent data into the FirestoreDocumentEventData instance
     firestore_payload._pb.ParseFromString(cloud_event.data)
+    
+    # Convert the FirestoreDocumentEventData to a dictionary
+    firestore_dict = MessageToDict(firestore_payload._pb)
+    
+    # Print the resulting dictionary
+    print(firestore_dict)
 
-    test = MessageToDict(firestore_payload)
-    print(test)
     return "test"
     firestore_obj = firestore_payload.value.fields
     
