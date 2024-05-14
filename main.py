@@ -61,16 +61,16 @@ def main(cloud_event: CloudEvent):
     firestore_payload._pb.ParseFromString(cloud_event.data)
     
     # Convert the FirestoreDocumentEventData to a dictionary
-    firestore_dict = MessageToDict(firestore_payload._pb).value.fields
+    firestore_dict = MessageToDict(firestore_payload._pb)["value"]["fields"]
     
-    search_request_uuid = firestore_dict["search_request_uuid"].stringValue
+    search_request_uuid = firestore_dict["search_request_uuid"]["stringValue"]
     
-    prescription = firestore_dict["prescription"].mapValue.fields
-    user_location = firestore_dict["user_location"].mapValue.fields
-    lat = user_location["lat"].stringValue
-    lon = user_location["lon"].stringValue
+    prescription = firestore_dict["prescription"]["mapValue"]["fields"]
+    user_location = firestore_dict["user_location"]["mapValue"]["fields"]
+    lat = user_location["lat"]["stringValue"]
+    lon = user_location["lon"]["stringValue"]
     
-    user_uuid = firestore_dict["user_uuid"].stringValue
+    user_uuid = firestore_dict["user_uuid"]["stringValue"]
 
 
     
