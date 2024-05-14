@@ -3,6 +3,7 @@ import functions_framework
 from cloudevents.http import CloudEvent
 from flask import jsonify
 from firebase_admin import credentials, firestore, initialize_app
+from google.protobuf.json_format import MessageToDict
 from packages import util
 from twilio.rest import Client
 import functions_framework
@@ -56,6 +57,9 @@ def main(cloud_event: CloudEvent):
     firestore_payload = ge_firestore.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
+    test = MessageToDict(firestore_payload)
+    print(test)
+    return "test"
     firestore_obj = firestore_payload.value.fields
     
     search_request_uuid = firestore_obj["search_request_uuid"].string_value
@@ -67,6 +71,7 @@ def main(cloud_event: CloudEvent):
     user_uuid = firestore_obj["user_uuid"]
 
 
+    
     user_doc = db.collection(FIREBASE_USERS_DB).document(user_uuid).get()
 
     phone_number = user_doc.to_dict()["phone"]
