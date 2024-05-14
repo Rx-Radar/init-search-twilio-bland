@@ -60,8 +60,8 @@ def main(cloud_event: CloudEvent):
     
     search_request_uuid = firestore_obj.fields["search_request_uuid"].string_value
     
-    prescription = firestore_obj.fields["prescription"]
-    user_location = firestore_obj.fields["user_location"]
+    prescription = firestore_obj.fields["prescription"].value
+    user_location = firestore_obj.fields["user_location"].value
     lat = user_location.fields["lat"].string_value
     lon = user_location.fields["lon"].string_value
     user_uuid = firestore_obj.fields["user_uuid"]
