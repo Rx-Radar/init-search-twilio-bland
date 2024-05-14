@@ -62,9 +62,8 @@ def main(cloud_event: CloudEvent):
     
     prescription = firestore_obj.fields["prescription"]
     user_location = firestore_obj.fields["user_location"]
-    lat = user_location["lat"].string_value
-    lon = user_location["lon"].string_value
-    lon = user_location["lon"].string_value
+    lat = user_location.fields["lat"].string_value
+    lon = user_location.fields["lon"].string_value
     user_uuid = firestore_obj.fields["user_uuid"]
 
 
