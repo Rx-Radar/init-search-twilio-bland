@@ -56,15 +56,15 @@ def main(cloud_event: CloudEvent):
     firestore_payload = ge_firestore.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
-    firestore_obj = firestore_payload.value
+    firestore_obj = firestore_payload.value.fields
     
-    search_request_uuid = firestore_obj.fields["search_request_uuid"].string_value
+    search_request_uuid = firestore_obj["search_request_uuid"].string_value
     
-    prescription = firestore_obj.fields["prescription"].value
-    user_location = firestore_obj.fields["user_location"].value
+    prescription = firestore_obj["prescription"].struct_value.fields
+    user_location = firestore_obj["user_location"].string_value.fields
     lat = user_location.fields["lat"].string_value
     lon = user_location.fields["lon"].string_value
-    user_uuid = firestore_obj.fields["user_uuid"]
+    user_uuid = firestore_obj["user_uuid"]
 
 
     user_doc = db.collection(FIREBASE_USERS_DB).document(user_uuid).get()

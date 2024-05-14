@@ -136,11 +136,11 @@ def insert_queue(search_uuid, call_uuid, pharm_phone, prescription, number_calls
         payload = {
             "call_uuid": call_uuid, # pass the uuid, this will become metadata on the actual request
             "request_uuid": search_uuid,
-            "name": prescription.fields["name"].string_value,
-            "dosage": prescription.fields["dosage"].string_value,
-            "brand": prescription.fields["brand"].string_value,
-            "quantity": prescription.fields["quantity"].string_value,
-            "type": prescription.fields["type"].string_value,
+            "name": prescription["name"].string_value,
+            "dosage": prescription["dosage"].string_value,
+            "brand": prescription["brand"].string_value,
+            "quantity": prescription["quantity"].string_value,
+            "type": prescription["type"].string_value,
             "pharm_phone": pharm_phone,
         }
         payload_bytes = json.dumps(payload).encode()
