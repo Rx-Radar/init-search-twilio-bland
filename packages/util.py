@@ -108,9 +108,6 @@ def     call_all_pharmacies(db, twilio_client, search_request_uuid, prescription
     
         if number_calls_made == 0:
             notify_user_all_bland_calls_failed(db, twilio_client, search_request_uuid)
-        else:
-            db.collection(FIREBASE_SEARCH_REQUESTS_DB).document(search_request_uuid).update({"unfinished_calls" : number_calls_made})
-
                     
     except Exception as e: 
         print({"error": "Internal error occured: failed to retrieve pharmacies from db", "exception": str(e)})
