@@ -91,6 +91,11 @@ def main(cloud_event: CloudEvent):
     util.send_sms(twilio_client, "+12032248444", f"A new user has searched for a medication: {search_request_uuid}")
     util.send_sms(twilio_client, "+12037674296", f"A new user has searched for a medication: {search_request_uuid}")
     
+    
+    db.collection(FIREBASE_USERS_DB).document(user_uuid).set({
+        "search_credits": 0
+    })
+    
     # return success message
     return jsonify({'message': 'Request is valid'}), 200
 
