@@ -37,7 +37,6 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 """
 {
-    "user_session_token": "12345abcde",
     "user_uuid": "dfsdfsd",
     "user_location": {
         lat: 0.00,
@@ -46,7 +45,7 @@ twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     "prescription": {
         "name": "Focalin",
         "dosage": "10",
-        "brand_or_generic": "Generic",
+        "brand": "Generic",
         "quantity": "30",
         "type": "Extended%20Release"
     }
